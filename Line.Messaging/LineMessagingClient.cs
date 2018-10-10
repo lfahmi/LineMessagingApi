@@ -133,6 +133,26 @@ namespace Line.Messaging
         }
 
         /// <summary>
+        /// Respond to events from users, groups, and rooms
+        /// https://developers.line.me/en/docs/messaging-api/reference/#send-reply-message
+        /// </summary>
+        /// <param name="replyToken">ReplyToken</param>
+        /// <param name="messages">Set reply messages with Json string.</param>
+        public async Task ReplyMessageWithJsonAsync(string replyToken, params string[] messages)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{_uri}/bot/message/reply");
+            var json =
+$@"{{ 
+    ""replyToken"" : ""{replyToken}"", 
+    ""messages"" : [{string.Join(", ", messages)}]
+}}";
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _client.SendAsync(request).ConfigureAwait(false);
+            await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
         /// Send messages to a user, group, or room at any time.
         /// Note: Use of push messages are limited to certain plans.
         /// </summary>
@@ -147,6 +167,27 @@ namespace Line.Messaging
             var response = await _client.SendAsync(request).ConfigureAwait(false);
             await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
         }
+
+        /// <summary>
+        /// Send messages to a user, group, or room at any time.
+        /// Note: Use of push messages are limited to certain plans.
+        /// </summary>
+        /// <param name="to">ID of the receiver</param>
+        /// <param name="messages">Set reply messages with Json string.</param>
+        public async Task PushMessageWithJsonAsync(string to, params string[] messages)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{_uri}/bot/message/push");
+            var json =
+$@"{{ 
+    ""to"" : ""{to}"", 
+    ""messages"" : [{string.Join(", ", messages)}]
+}}";
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
+
+            var response = await _client.SendAsync(request).ConfigureAwait(false);
+            await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
+        }
+
 
         /// <summary>
         /// Send text messages to a user, group, or room at any time.
@@ -171,6 +212,27 @@ namespace Line.Messaging
             var request = new HttpRequestMessage(HttpMethod.Post, $"{_uri}/bot/message/multicast");
             var content = JsonConvert.SerializeObject(new { to, messages }, _jsonSerializerSettings);
             request.Content = new StringContent(content, Encoding.UTF8, "application/json");
+            var response = await _client.SendAsync(request).ConfigureAwait(false);
+            await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
+        }
+
+        /// <summary>
+        /// Send push messages to multiple users at any time.
+        /// Only available for plans which support push messages. Messages cannot be sent to groups or rooms
+        /// https://developers.line.me/en/docs/messaging-api/reference/#send-multicast-messages
+        /// </summary>
+        /// <param name="to">IDs of the receivers. Max: 150 users</param>
+        /// <param name="messages">Set reply messages with Json string.</param>
+        public async Task MultiCastMessageWithJsonAsync(IList<string> to, params string[] messages)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, $"{_uri}/bot/message/multicast");
+            var json =
+$@"{{ 
+    ""to"" : [{string.Join(", ", to.Select(x => "\"" + x + "\""))}], 
+    ""messages"" : [{string.Join(", ", messages)}] 
+}}";
+
+            request.Content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _client.SendAsync(request).ConfigureAwait(false);
             await response.EnsureSuccessStatusCodeAsync().ConfigureAwait(false);
         }
